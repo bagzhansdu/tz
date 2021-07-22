@@ -1,0 +1,38 @@
+version: "3.3"
+
+services:
+    nginx:
+        build:
+            context: .
+            dockerfile: docker/Nginx.Dockerfile
+        ports:
+            - 8098:80
+        links:
+            - fpm
+        volumes:
+            - ./:/var/wwwd/laravel-docker
+    fpm:
+        build:
+            context: .
+            dockerfile: docker/Fpm.Dockerfile
+        volumes:
+            - ./:/var/www/laravel-docker
+    postgres:
+        image: postgres:13.1
+        container_name: pgsql
+        healthcheck:
+            test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
+            timeout: 45s
+            interval: 10s
+            retries: 10
+        restart: always
+        environment:
+            - POSTGRES_USER=root
+            - POSTGRES_PASSWORD=password
+            - APP_DB_USER=docker
+            - APP_DB_PASS=docker
+            - APP_DB_NAME=docker
+        volumes:
+            - ./db:/docker-entrypoint-initdb.d/
+        ports:
+            - 5432:5432
